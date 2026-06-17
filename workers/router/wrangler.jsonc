@@ -4,10 +4,35 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-01-01",
   "compatibility_flags": ["nodejs_compat"],
-  "vars": {
-    "CONTROL_URL": "http://localhost:8787",
-    "TREATMENT_URL": "http://localhost:8788",
-    "SPLIT_PERCENT": "50"
+  // 同一 Dockerfile(リポジトリ root) を REACT_UPGRADE で出し分けて 2 コンテナを生成。
+  "containers": [
+    {
+      "class_name": "ControlContainer",
+      "image": "../../Dockerfile",
+      "image_build_context": "../..",
+      "image_vars": { "REACT_UPGRADE": "false" },
+      "max_instances": 1
+    },
+    {
+      "class_name": "TreatmentContainer",
+      "image": "../../Dockerfile",
+      "image_build_context": "../..",
+      "image_vars": { "REACT_UPGRADE": "true" },
+      "max_instances": 1
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "CONTROL", "class_name": "ControlContainer" },
+      { "name": "TREATMENT", "class_name": "TreatmentContainer" }
+    ]
   },
-  "kv_namespaces": [{ "binding": "METRICS", "id": "REPLACE_WITH_KV_ID" }]
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["ControlContainer", "TreatmentContainer"]
+    }
+  ],
+  "kv_namespaces": [{ "binding": "METRICS", "id": "REPLACE_WITH_KV_ID" }],
+  "vars": { "SPLIT_PERCENT": "50" }
 }

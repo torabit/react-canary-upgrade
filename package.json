@@ -14,14 +14,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
-    "cf:build:control": "REACT_UPGRADE=false opennextjs-cloudflare build",
-    "cf:deploy:control": "pnpm cf:build:control && wrangler deploy --name react-canary-control",
-    "cf:build:treatment": "REACT_UPGRADE=true opennextjs-cloudflare build",
-    "cf:deploy:treatment": "pnpm cf:build:treatment && wrangler deploy --name react-canary-treatment",
-    "cf:preview:control": "pnpm cf:build:control && wrangler dev --name react-canary-control"
+    "cf:dev": "wrangler dev --config workers/router/wrangler.jsonc",
+    "cf:deploy": "wrangler deploy --config workers/router/wrangler.jsonc"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.19.11",
+    "@cloudflare/containers": "^0.3.7",
     "hono": "^4.12.25",
     "next": "15.5.4",
     "react": "18.2.0",

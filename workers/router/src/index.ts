@@ -1,11 +1,24 @@
 /// <reference types="@cloudflare/workers-types" />
+import { Container, getContainer } from "@cloudflare/containers";
 import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { type Bucket, resolveBucket } from "./bucket";
 
+// control(React18) / treatment(React19) を別イメージで動かすコンテナ。
+// 実体は同一 Dockerfile を image_vars(REACT_UPGRADE) で出し分けたもの（wrangler.jsonc）。
+export class ControlContainer extends Container {
+  defaultPort = 3000;
+  sleepAfter = "10m";
+}
+
+export class TreatmentContainer extends Container {
+  defaultPort = 3000;
+  sleepAfter = "10m";
+}
+
 interface Env {
-  CONTROL_URL: string;
-  TREATMENT_URL: string;
+  CONTROL: DurableObjectNamespace<ControlContainer>;
+  TREATMENT: DurableObjectNamespace<TreatmentContainer>;
   SPLIT_PERCENT: string;
   METRICS: KVNamespace;
 }
@@ -74,12 +87,10 @@ app.get("/stats", async (c) => {
   return c.json(stats);
 });
 
-// それ以外は割当先 Worker へプロキシ（nginx の weighted upstream 相当）。
+// それ以外は割当先コンテナへ転送（control=React18 / treatment=React19）。
 app.all("*", (c) => {
-  const base =
-    c.get("bucket") === "treatment" ? c.env.TREATMENT_URL : c.env.CONTROL_URL;
-  const url = new URL(c.req.url);
-  return fetch(new Request(base + url.pathname + url.search, c.req.raw));
+  const ns = c.get("bucket") === "treatment" ? c.env.TREATMENT : c.env.CONTROL;
+  return getContainer(ns).fetch(c.req.raw);
 });
 
 export default app;

@@ -5,7 +5,7 @@ Airbnb の記事 [How Airbnb Smoothly Upgrades React](https://medium.com/airbnb-
 2 層を扱う:
 
 1. **モジュールエイリアシング** — 単一コードベースから `REACT_UPGRADE` env と npm-alias で **control(React 18) / treatment(React 19)** の 2 成果物をビルドする。ソースコードは無変更。
-2. **トラフィック分割** — control / treatment を Cloudflare Workers に並べ、Hono 製ルーターが cookie バケッティングで `%` 制御の段階ロールアウトを行い、Web Vitals / エラー率を計測して出荷判断する。
+2. **トラフィック分割** — control / treatment を **Cloudflare Containers**（マルチステージ Docker イメージ）として動かし、前段の **Hono ルーター Worker** が cookie バケッティングで `%` 制御の段階ロールアウトを行い、Web Vitals / エラー率を KV に集計して出荷判断する。
 
 ## 実ブラウザでの React バージョン差し替え
 
@@ -34,11 +34,28 @@ pnpm build:treatment     # React 19 ビルド
 pnpm test                # Vitest（インストール済み React = 18 をテスト）
 E2E_VARIANT=control   pnpm e2e --update-snapshots   # baseline 生成（React 18）
 E2E_VARIANT=treatment pnpm e2e                        # 比較・検証（React 19）
+
+# Docker（control=React18 / treatment=React19）
+docker build --build-arg REACT_UPGRADE=false -t rcu-control .
+docker build --build-arg REACT_UPGRADE=true  -t rcu-treatment .
 ```
+
+## デプロイ（Cloudflare Containers）
+
+Cloudflare Containers は **Workers Paid プラン（$5/月）** が必要（コンテナ稼働分は月間無料枠に収まる）。
+
+```bash
+wrangler login
+wrangler kv namespace create METRICS          # 出力の id を workers/router/wrangler.jsonc の REPLACE_WITH_KV_ID に設定
+pnpm cf:deploy                                  # 両 Docker イメージをビルド・push し Worker + Containers をデプロイ
+```
+
+`SPLIT_PERCENT`（treatment へ振る %）と KV の `/stats` で control/treatment を比較し段階ロールアウトする。
 
 ## 構成
 
 - `src/pages/` — Pages Router（`_app.tsx` で Web Vitals/エラー収集を起動）
 - `src/lib/vitals.ts` — `web-vitals` 収集 → `/beacon` 送信
-- `workers/router/` — Hono ルーター（cookie バケッティング・`/beacon` の KV 集計・`/stats`・プロキシ）
+- `Dockerfile` — マルチステージ。`ARG REACT_UPGRADE` で control/treatment イメージを出し分け（standalone 出力 / 非 root / tini）
+- `workers/router/` — Hono ルーター Worker。`getContainer()` で control/treatment コンテナへ分割、`/beacon` の KV 集計・`/stats`
 - `next.config.ts` — `REACT_UPGRADE` による react alias と distDir 切替
