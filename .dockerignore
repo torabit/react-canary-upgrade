@@ -1,0 +1,13 @@
+node_modules
+.next
+.next-*
+.git
+.github
+.wrangler
+.open-next
+test-results
+playwright-report
+docs
+e2e/__screenshots__
+**/*.log
+.env*
