@@ -12,8 +12,6 @@
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:control": "REACT_UPGRADE=false vitest run",
-    "test:treatment": "REACT_UPGRADE=true vitest run",
     "e2e": "playwright test"
   },
   "dependencies": {
