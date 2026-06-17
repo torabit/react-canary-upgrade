@@ -6,6 +6,9 @@ const require = createRequire(import.meta.url);
 const useUpgrade = process.env.REACT_UPGRADE === "true";
 
 const nextConfig: NextConfig = {
+  // control/treatment は別 distDir でビルドする。共有すると webpack キャッシュが
+  // 汚染され、alias 無しの control が前回 treatment の react-19 を再利用してしまう。
+  distDir: process.env.DIST_DIR ?? ".next",
   env: { NEXT_PUBLIC_REACT_UPGRADE: String(useUpgrade) },
   webpack: (config) => {
     if (useUpgrade) {
