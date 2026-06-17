@@ -45,3 +45,6 @@ next-env.d.ts
 .wrangler/
 .dev.vars
 .dev.vars.*
+
+# extra build dirs
+.next-*/
