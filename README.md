@@ -70,9 +70,6 @@ docker build --build-arg REACT_UPGRADE=true  -t rcu-treatment .
 
 ## デプロイ（Cloudflare Containers）
 
-Cloudflare Containers は Workers Paid プラン（月 5 ドル）を必要とする。
-コンテナの稼働分は月間の無料枠に収まる。
-
 ```bash
 wrangler login
 wrangler kv namespace create METRICS   # 出力された id を workers/router/wrangler.jsonc の REPLACE_WITH_KV_ID に設定する
