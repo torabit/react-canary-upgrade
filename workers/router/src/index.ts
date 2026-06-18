@@ -1,7 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import { Container, getContainer } from "@cloudflare/containers";
 import { Hono } from "hono";
-import { getCookie, setCookie } from "hono/cookie";
+import { getCookie } from "hono/cookie";
 import { type Bucket, resolveBucket } from "./bucket";
 
 // control(React18) / treatment(React19) を別イメージで動かすコンテナ。
@@ -47,12 +47,6 @@ app.use("*", async (c, next) => {
     split,
     Math.random(),
   );
-  if (cookie !== bucket) {
-    setCookie(c, "exp_bucket", bucket, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-    });
-  }
   c.set("bucket", bucket);
   await next();
 });
@@ -88,9 +82,18 @@ app.get("/stats", async (c) => {
 });
 
 // それ以外は割当先コンテナへ転送（control=React18 / treatment=React19）。
-app.all("*", (c) => {
-  const ns = c.get("bucket") === "treatment" ? c.env.TREATMENT : c.env.CONTROL;
-  return getContainer(ns).fetch(c.req.raw);
+// コンテナ応答をそのまま返すと Hono の Set-Cookie が失われるため、
+// 応答を作り直してスティッキー cookie を付与する。
+app.all("*", async (c) => {
+  const bucket = c.get("bucket");
+  const ns = bucket === "treatment" ? c.env.TREATMENT : c.env.CONTROL;
+  const upstream = await getContainer(ns).fetch(c.req.raw);
+  const res = new Response(upstream.body, upstream);
+  res.headers.append(
+    "Set-Cookie",
+    `exp_bucket=${bucket}; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`,
+  );
+  return res;
 });
 
 export default app;
