@@ -16,7 +16,16 @@ Airbnb の記事 [How Airbnb Smoothly Upgrades React](https://medium.com/airbnb-
 | ![control React 18](docs/home-control.png) | ![treatment React 19](docs/home-treatment.png) |
 | Running React **18.2.0** | Running React **19.2.0** |
 
-Playwright e2e（`e2e/visual.spec.ts`）が、control を baseline に treatment のレイアウト一致・各バージョンでの Counter 動作・クライアント React メジャーを検証する。
+### 挙動による証明（バージョン文字列だけに頼らない）
+
+`BehaviorProbe` が React 18→19 の breaking change を実行時に判定して画面に表示する。同一コードがバージョン差でだけ結果を変えるため、18/19 が本当に動いていることを挙動で示せる:
+
+| プローブ | React 18 (control) | React 19 (treatment) |
+| --- | --- | --- |
+| `ref` を関数コンポーネントに prop として渡す | ❌ null（forwardRef 必須） | ✅ 動作（ref が通常の prop に） |
+| コンポーネント内の `<meta>` の `<head>` 巻き上げ | ❌ body に残る | ✅ head へ自動巻き上げ |
+
+Playwright e2e（`e2e/visual.spec.ts`）が、control を baseline に treatment のレイアウト一致・Counter 動作・クライアント React メジャー・上記プローブ挙動を検証する。
 
 ## Next.js での注意点（重要な学び）
 

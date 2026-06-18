@@ -13,6 +13,17 @@ test(`client runs React ${expectedMajor} [${variant}]`, async ({ page }) => {
   );
 });
 
+// React 18→19 の breaking change（ref を prop で渡す / <meta> の head 巻き上げ）が
+// 挙動として現れることを検証する。同一コードがバージョン差でだけ結果を変える。
+test(`react behavior reflects ${expectedMajor} [${variant}]`, async ({
+  page,
+}) => {
+  await page.goto("/");
+  const marker = `React ${expectedMajor}`;
+  await expect(page.getByTestId("probe-ref")).toContainText(marker);
+  await expect(page.getByTestId("probe-meta")).toContainText(marker);
+});
+
 // 同一コードが両 React バージョンで機能することを実ブラウザで検証する。
 test(`counter increments [${variant}]`, async ({ page }) => {
   await page.goto("/");
@@ -26,7 +37,10 @@ test(`home page renders consistently [${variant}]`, async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "increment" })).toBeVisible();
   await expect(page).toHaveScreenshot("home.png", {
-    mask: [page.getByTestId("react-version")],
+    mask: [
+      page.getByTestId("react-version"),
+      page.getByTestId("behavior-probe"),
+    ],
     maxDiffPixelRatio: 0.01,
   });
 });

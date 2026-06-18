@@ -1,4 +1,5 @@
 import { version } from "react";
+import { BehaviorProbe } from "@/components/BehaviorProbe";
 import { Counter } from "@/components/Counter";
 
 export default function Home() {
@@ -9,6 +10,7 @@ export default function Home() {
         Running React {version}
       </p>
       <Counter />
+      <BehaviorProbe />
     </main>
   );
 }
