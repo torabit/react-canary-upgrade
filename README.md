@@ -41,7 +41,7 @@ React 19 はコンポーネント内に書いた `<meta>` を `<head>` へ巻き
 
 ## Next.js で React を差し替えるときの注意
 
-App Router は React のランタイムを Next 同梱版（`next/dist/compiled/react`）に固定する。
+App Router は React のランタイムを Next 同梱版（`next/dist/compiled/react`）に固定する[^next-react]。
 このため npm-alias でアプリの `react` を差し替えても、実行時の React は変わらない。
 
 そこで本リポジトリは **Pages Router** を採用する。
@@ -86,3 +86,5 @@ pnpm cf:deploy                          # 両 Docker イメージをビルドし
 - `Dockerfile`：マルチステージ。`ARG REACT_UPGRADE` で control と treatment のイメージを出し分ける（standalone 出力、非 root、tini）。
 - `workers/router/`：Hono ルーター。`getContainer()` で振り分け、`/beacon` を KV に集計し、`/stats` で返す。
 - `next.config.ts`：`REACT_UPGRADE` による react alias と distDir の切り替え。
+
+[^next-react]: Next.js 公式ドキュメント [Installation（Manual installation の Good to know）](https://nextjs.org/docs/app/getting-started/installation) に「The `App Router` uses React canary releases built-in ... but you should still declare react and react-dom in package.json for tooling and ecosystem compatibility. The `Pages Router` uses the React version from your `package.json`.」とある。App Router は React を同梱版で動かし、`package.json` の react/react-dom は tooling とエコシステム互換のために宣言するだけ。Pages Router は `package.json` の React を使う。
