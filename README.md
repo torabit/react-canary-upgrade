@@ -18,14 +18,15 @@ Airbnb の記事 [How Airbnb Smoothly Upgrades React](https://medium.com/airbnb-
 
 ### 挙動による証明（バージョン文字列だけに頼らない）
 
-`BehaviorProbe` が React 18→19 の breaking change を実行時に判定して画面に表示する。同一コードがバージョン差でだけ結果を変えるため、18/19 が本当に動いていることを挙動で示せる:
+`BehaviorProbe` が React 18→19 の breaking change を実行時に走らせ、**実行したコードと観測値・実行環境をそのまま画面に表示**する（判定文や絵文字ではなく生の値）。同一コードがバージョン差でだけ観測値を変えるため、18/19 が本当に動いていることを示せる:
 
-| プローブ | React 18 (control) | React 19 (treatment) |
+| 観測対象 | React 18 (control) | React 19 (treatment) |
 | --- | --- | --- |
-| `ref` を関数コンポーネントに prop として渡す | ❌ null（forwardRef 必須） | ✅ 動作（ref が通常の prop に） |
-| コンポーネント内の `<meta>` の `<head>` 巻き上げ | ❌ body に残る | ✅ head へ自動巻き上げ |
+| `ref` を関数コンポーネントの prop で渡したときの `spanRef.current` | `null` | `<span>` |
+| コンポーネント内 `<meta>` の `parentElement.tagName` | `SECTION`（描画位置に残る） | `HEAD`（`<head>` へ巻き上げ） |
+| `process.env.NEXT_PUBLIC_REACT_UPGRADE`（ビルド環境） | `"false"` | `"true"` |
 
-Playwright e2e（`e2e/visual.spec.ts`）が、control を baseline に treatment のレイアウト一致・Counter 動作・クライアント React メジャー・上記プローブ挙動を検証する。
+Playwright e2e（`e2e/visual.spec.ts`）が、control を baseline に treatment のレイアウト一致・クライアント React メジャー・上記プローブ観測値を検証する。
 
 ## Next.js での注意点（重要な学び）
 
